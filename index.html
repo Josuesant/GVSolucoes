@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GV Soluções – Zeladoria e Limpeza para Condomínios</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+
+    :root{
+      --laranja:#E8810A;
+      --laranja-hover:#C76A08;
+      --grafite:#3D3D3D;
+      --grafite-escuro:#2A2A2A;
+      --cinza-bg:#F5F5F5;
+      --cinza-texto:#666666;
+      --branco:#FFFFFF;
+      --verde-wpp:#25D366;
+    }
+
+    html{scroll-behavior:smooth}
+    body{font-family:'Montserrat',sans-serif;background:var(--branco);color:var(--grafite);overflow-x:hidden}
+
+    /* ── NAVBAR ── */
+    nav{
+      background:var(--grafite-escuro);
+      padding:14px 48px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:100;
+      box-shadow:0 2px 16px rgba(0,0,0,.35);
+    }
+    .logo-svg{
+      display:flex;align-items:center;gap:12px;text-decoration:none
+    }
+    .logo-svg svg{height:44px;width:auto}
+    .logo-texto .nome{font-size:1.15rem;font-weight:900;color:var(--branco);letter-spacing:.5px}
+    .logo-texto .nome span{color:var(--laranja)}
+    .logo-texto .sub{font-size:.62rem;color:#aaa;font-weight:500;letter-spacing:.8px;text-transform:uppercase;margin-top:2px}
+    nav a.btn-nav{
+      background:var(--laranja);
+      color:var(--branco);
+      font-weight:700;font-size:.82rem;
+      padding:10px 24px;
+      border-radius:30px;
+      text-decoration:none;
+      letter-spacing:.4px;
+      transition:background .2s,transform .2s
+    }
+    nav a.btn-nav:hover{background:var(--laranja-hover);transform:translateY(-1px)}
+
+    /* ── HERO ── */
+    .hero{
+      background:var(--grafite-escuro);
+      background-image:
+        radial-gradient(ellipse at 75% 40%,rgba(232,129,10,.13) 0%,transparent 60%),
+        linear-gradient(150deg,#222222 55%,#2f2f2f 100%);
+      min-height:92vh;
+      display:flex;align-items:center;justify-content:center;
+      padding:70px 48px
+    }
+    .hero-inner{
+      max-width:1080px;width:100%;
+      display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center
+    }
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(232,129,10,.15);
+      border:1px solid rgba(232,129,10,.4);
+      color:var(--laranja);
+      font-size:.7rem;font-weight:700;letter-spacing:1.8px;
+      text-transform:uppercase;padding:6px 14px;
+      border-radius:20px;margin-bottom:22px
+    }
+    .hero-badge::before{
+      content:'';width:6px;height:6px;background:var(--laranja);border-radius:50%
+    }
+    .hero-texto h1{
+      font-size:clamp(1.9rem,3.2vw,2.9rem);
+      font-weight:900;color:var(--branco);
+      line-height:1.18;margin-bottom:20px
+    }
+    .hero-texto h1 span{color:var(--laranja)}
+    .hero-texto p.lead{
+      font-size:1rem;color:#c0c0c0;line-height:1.75;margin-bottom:30px
+    }
+    .hero-texto p.lead strong{color:var(--laranja);font-weight:700}
+    .hero-bullets{list-style:none;margin-bottom:36px}
+    .hero-bullets li{
+      color:#dddddd;font-size:.9rem;padding:7px 0;
+      display:flex;align-items:center;gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.05)
+    }
+    .hero-bullets li:last-child{border-bottom:none}
+    .hero-bullets li .dot{
+      width:8px;height:8px;background:var(--laranja);border-radius:50%;flex-shrink:0
+    }
+    .btn-wpp{
+      display:inline-flex;align-items:center;gap:10px;
+      background:var(--verde-wpp);color:var(--branco);
+      font-weight:700;font-size:1rem;
+      padding:16px 34px;border-radius:50px;
+      text-decoration:none;box-shadow:0 4px 24px rgba(37,211,102,.3);
+      transition:transform .2s,box-shadow .2s
+    }
+    .btn-wpp:hover{
+      transform:translateY(-3px);
+      box-shadow:0 8px 32px rgba(37,211,102,.45)
+    }
+    .hero-sub{font-size:.76rem;color:#777;margin-top:14px}
+    .hero-card{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px;padding:42px 38px;
+      backdrop-filter:blur(4px)
+    }
+    .stat-principal{
+      text-align:center;padding-bottom:30px;margin-bottom:30px;
+      border-bottom:1px solid rgba(255,255,255,.08)
+    }
+    .stat-principal .numero{
+      font-size:5rem;font-weight:900;color:var(--laranja);line-height:1
+    }
+    .stat-principal .label{
+      font-size:.95rem;color:#cccccc;margin-top:8px;line-height:1.5
+    }
+    .stat-principal .detalhe{
+      font-size:.76rem;color:#777;margin-top:10px;font-style:italic
+    }
+    .mini-stats{
+      display:grid;grid-template-columns:1fr 1fr;gap:16px
+    }
+    .mini-stat{
+      background:rgba(232,129,10,.08);
+      border-radius:10px;padding:16px 14px;
+      text-align:center
+    }
+    .mini-stat .n{font-size:1.6rem;font-weight:900;color:var(--laranja)}
+    .mini-stat .l{font-size:.72rem;color:#aaaaaa;margin-top:4px;line-height:1.4}
+
+    /* ── BANNER ── */
+    .banner-destaque{
+      background:var(--laranja);
+      padding:26px 48px;
+      text-align:center
+    }
+    .banner-destaque p{
+      font-size:clamp(.9rem,1.8vw,1.1rem);
+      font-weight:700;color:var(--branco)
+    }
+    .banner-destaque p strong{
+      font-size:clamp(1.1rem,2.2vw,1.4rem)
+    }
+
+    /* ── SOBRE ── */
+    .sobre{
+      background:var(--branco);
+      padding:90px 48px;
+      display:flex;justify-content:center
+    }
+    .sobre-inner{
+      max-width:1040px;width:100%;
+      display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center
+    }
+    .sobre-texto h2{
+      font-size:clamp(1.5rem,2.5vw,2.2rem);
+      font-weight:900;color:var(--grafite);
+      margin-bottom:22px;line-height:1.25
+    }
+    .sobre-texto h2 span{color:var(--laranja)}
+    .sobre-texto p{
+      font-size:.96rem;color:var(--cinza-texto);
+      line-height:1.85;margin-bottom:16px
+    }
+    .sobre-texto .destaque-frase{
+      font-weight:700;color:var(--grafite);
+      font-size:1rem;border-left:4px solid var(--laranja);
+      padding-left:16px;margin-top:24px
+    }
+    .sobre-visual{display:flex;flex-direction:column;gap:16px}
+    .sobre-box{
+      background:var(--cinza-bg);
+      border-radius:14px;padding:28px;
+      border-left:5px solid var(--laranja)
+    }
+    .sobre-box .titulo-box{
+      font-size:.72rem;font-weight:700;letter-spacing:1.5px;
+      text-transform:uppercase;color:var(--laranja);
+      margin-bottom:8px
+    }
+    .sobre-box .conteudo-box{
+      font-size:.92rem;color:var(--cinza-texto);
+      line-height:1.6
+    }
+    .sobre-box .conteudo-box strong{color:var(--grafite);font-weight:700}
+
+    /* ── SERVIÇOS ── */
+    .servicos{
+      background:var(--cinza-bg);
+      padding:90px 48px;
+      text-align:center
+    }
+    .section-label{
+      display:inline-block;color:var(--laranja);
+      font-size:.7rem;font-weight:700;letter-spacing:2.5px;
+      text-transform:uppercase;margin-bottom:10px
+    }
+    .section-titulo{
+      font-size:clamp(1.5rem,2.5vw,2.2rem);
+      font-weight:900;color:var(--grafite);
+      margin-bottom:10px;line-height:1.25
+    }
+    .section-sub{
+      font-size:.96rem;color:var(--cinza-texto);
+      margin-bottom:52px;max-width:520px;
+      margin-left:auto;margin-right:auto;line-height:1.7
+    }
+    .cards-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:22px;max-width:1080px;margin:0 auto
+    }
+    .card{
+      background:var(--branco);
+      border-radius:16px;padding:36px 28px;
+      text-align:left;border-top:5px solid var(--laranja);
+      transition:transform .25s,box-shadow .25s;
+      box-shadow:0 2px 12px rgba(0,0,0,.05)
+    }
+    .card:hover{
+      transform:translateY(-6px);
+      box-shadow:0 12px 36px rgba(232,129,10,.12)
+    }
+    .card-icon{
+      width:50px;height:50px;
+      background:rgba(232,129,10,.12);
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;margin-bottom:18px
+    }
+    .card h3{
+      font-size:1.05rem;font-weight:700;color:var(--grafite);
+      margin-bottom:14px
+    }
+    .card ul{list-style:none}
+    .card ul li{
+      font-size:.86rem;color:var(--cinza-texto);
+      padding:5px 0;padding-left:16px;
+      position:relative;line-height:1.55
+    }
+    .card ul li::before{
+      content:'›';position:absolute;left:0;
+      color:var(--laranja);font-weight:900;font-size:1rem
+    }
+
+    /* ── BENEFÍCIOS ── */
+    .beneficios{
+      background:var(--grafite-escuro);
+      padding:90px 48px;
+      text-align:center
+    }
+    .beneficios .section-titulo{color:var(--branco)}
+    .beneficios .section-sub{color:#999}
+    .beneficios-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:20px;max-width:1080px;margin:0 auto
+    }
+    .ben-card{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:16px;padding:32px 28px;
+      text-align:left;
+      transition:border-color .2s,background .2s
+    }
+    .ben-card:hover{
+      border-color:rgba(232,129,10,.4);
+      background:rgba(232,129,10,.05)
+    }
+    .ben-icon{font-size:1.8rem;margin-bottom:14px}
+    .ben-card h4{
+      color:var(--laranja);
+      font-size:.92rem;font-weight:700;
+      margin-bottom:10px;
+      text-transform:uppercase;letter-spacing:.6px
+    }
+    .ben-card p{
+      color:#c0c0c0;font-size:.88rem;line-height:1.75
+    }
+
+    /* ── COMO FUNCIONA ── */
+    .como{
+      background:var(--branco);
+      padding:90px 48px;
+      text-align:center
+    }
+    .passos{
+      display:flex;flex-wrap:wrap;gap:0;justify-content:center;
+      max-width:960px;margin:0 auto;position:relative
+    }
+    .passo{
+      background:var(--cinza-bg);
+      border-radius:16px;padding:34px 26px;
+      width:210px;margin:10px;
+      text-align:center;position:relative;
+      transition:transform .2s
+    }
+    .passo:hover{transform:translateY(-4px)}
+    .passo-num{
+      width:48px;height:48px;
+      background:var(--laranja);color:var(--branco);
+      font-weight:900;font-size:1.2rem;
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 18px;
+      box-shadow:0 4px 14px rgba(232,129,10,.35)
+    }
+    .passo h4{
+      font-size:.95rem;font-weight:700;color:var(--grafite);
+      margin-bottom:10px
+    }
+    .passo p{
+      font-size:.83rem;color:var(--cinza-texto);
+      line-height:1.65
+    }
+
+    /* ── DEPOIMENTO ── */
+    .depoimento{
+      background:var(--laranja);
+      padding:80px 48px;
+      text-align:center
+    }
+    .depo-aspas{
+      font-size:5rem;line-height:.5;color:rgba(255,255,255,.25);
+      font-family:Georgia,serif;margin-bottom:20px
+    }
+    .depoimento blockquote{
+      font-size:clamp(1rem,2vw,1.25rem);
+      font-weight:600;color:var(--branco);
+      max-width:720px;margin:0 auto 24px;
+      line-height:1.75;font-style:italic
+    }
+    .depoimento cite{
+      font-size:.86rem;font-weight:700;
+      color:rgba(255,255,255,.75);font-style:normal
+    }
+
+    /* ── CTA FINAL ── */
+    .cta-final{
+      background:var(--grafite-escuro);
+      background-image:radial-gradient(ellipse at 50% 100%,rgba(232,129,10,.1) 0%,transparent 60%);
+      padding:100px 48px;
+      text-align:center
+    }
+    .cta-final h2{
+      font-size:clamp(1.6rem,3vw,2.6rem);
+      font-weight:900;color:var(--branco);
+      margin-bottom:16px;
+      max-width:680px;margin-left:auto;margin-right:auto;line-height:1.2
+    }
+    .cta-final h2 span{color:var(--laranja)}
+    .cta-final p.desc{
+      color:#999;font-size:1rem;margin-bottom:40px
+    }
+    .cta-final .btn-wpp{
+      font-size:1.08rem;padding:18px 44px
+    }
+    .cta-final .exclusivo{
+      margin-top:18px;font-size:.78rem;color:#555
+    }
+
+    /* ── FOOTER ── */
+    footer{
+      background:#1a1a1a;
+      padding:32px 48px;
+      text-align:center;color:#555;
+      font-size:.78rem;
+      border-top:1px solid rgba(255,255,255,.05)
+    }
+    footer span{color:var(--laranja)}
+
+    /* ── WHATSAPP FLUTUANTE ── */
+    .wpp-float{
+      position:fixed;bottom:28px;right:28px;
+      background:var(--verde-wpp);
+      width:62px;height:62px;
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 24px rgba(37,211,102,.5);
+      z-index:999;
+      transition:transform .2s,box-shadow .2s
+    }
+    .wpp-float:hover{
+      transform:scale(1.1);
+      box-shadow:0 6px 30px rgba(37,211,102,.65)
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:860px){
+      nav{padding:12px 20px}
+      .hero{padding:50px 20px;min-height:auto}
+      .hero-inner{grid-template-columns:1fr;gap:36px}
+      .hero-card{padding:28px 24px}
+      .sobre{padding:60px 20px}
+      .sobre-inner{grid-template-columns:1fr;gap:36px}
+      .servicos,.beneficios,.como,.cta-final,.depoimento{padding:60px 20px}
+      .banner-destaque{padding:20px}
+    }
+    @media(max-width:480px){
+      .mini-stats{grid-template-columns:1fr 1fr}
+      .passo{width:100%;margin:8px 0}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a href="#" class="logo-svg">
+    <!-- Logo SVG (G + V + prédio) -->
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 8 C22 8 8 22 8 40 C8 58 22 72 40 72 C52 72 62 65 67 55 L52 55 L52 44 L68 44 L68 40 C68 22 54 8 40 8 Z"
+            fill="none" stroke="#AAAAAA" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="120 40"/>
+      <polygon points="26,28 40,56 54,28 48,28 40,44 32,28" fill="#E8810A"/>
+      <rect x="33" y="10" width="6" height="12" fill="#AAAAAA" rx="1"/>
+      <rect x="41" y="13" width="4" height="9" fill="#AAAAAA" rx="1"/>
+      <rect x="27" y="14" width="4" height="8" fill="#AAAAAA" rx="1"/>
+    </svg>
+    <div class="logo-texto">
+      <div class="nome">GV <span>Soluções</span></div>
+      <div class="sub">Zeladoria · Limpeza · Condomínios</div>
+    </div>
+  </a>
+  <a href="https://wa.me/554298888-9271?text=Olá%2C%20quero%20um%20orçamento%20para%20meu%20condomínio."
+     class="btn-nav" target="_blank">Falar no WhatsApp</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-texto">
+      <span class="hero-badge">Especialistas em Condomínios · Blumenau/SC</span>
+      <h1>Zeladoria e Limpeza<br/><span>sem complicação</span><br/>para o seu condomínio</h1>
+      <p class="lead">
+        Terceirização completa com equipe treinada, segurança jurídica total e economia comprovada de
+        <strong>+35% nos custos de materiais de limpeza</strong>.
+      </p>
+      <ul class="hero-bullets">
+        <li><span class="dot"></span>Zelador e serventes qualificados e uniformizados</li>
+        <li><span class="dot"></span>Coberturas e substituições sem custo adicional</li>
+        <li><span class="dot"></span>Todos os encargos trabalhistas por nossa conta</li>
+        <li><span class="dot"></span>Supervisão mensal presencial no condomínio</li>
+        <li><span class="dot"></span>Contrato claro, LGPD e segurança jurídica garantida</li>
+      </ul>
+      <a href="https://wa.me/554298888-9271?text=Olá%2C%20quero%20um%20orçamento%20para%20meu%20condomínio."
+         class="btn-wpp" target="_blank">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="white" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.845L.057 23.428a.5.5 0 0 0 .515.572l5.763-1.51A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.857a9.833 9.833 0 0 1-5.031-1.381l-.36-.214-3.732.979.996-3.642-.235-.374A9.808 9.808 0 0 1 2.143 12C2.143 6.547 6.547 2.143 12 2.143S21.857 6.547 21.857 12 17.453 21.857 12 21.857z"/>
+        </svg>
+        Quero um orçamento grátis
+      </a>
+      <p class="hero-sub">Atendimento exclusivo para síndicos e administradoras</p>
+    </div>
+
+    <div class="hero-card">
+      <div class="stat-principal">
+        <div class="numero">+35%</div>
+        <div class="label">de economia em<br/>materiais de limpeza</div>
+        <div class="detalhe">Resultado comprovado em condomínio atendido pela GV Soluções, com melhoria na qualidade.</div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="n">0</div><div class="l">Passivo trabalhista para o condomínio</div></div>
+        <div class="mini-stat"><div class="n">24h</div><div class="l">Para substituição de colaboradores</div></div>
+        <div class="mini-stat"><div class="n">1x</div><div class="l">Visita de supervisão por mês</div></div>
+        <div class="mini-stat"><div class="n">CLT</div><div class="l">Tudo regularizado e por nossa conta</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BANNER DESTAQUE -->
+<div class="banner-destaque">
+  <p><strong>+35% de economia comprovada</strong> em materiais de limpeza — sem perder qualidade. Resultado real de condomínio atendido pela GV Soluções.</p>
+</div>
+
+<!-- SOBRE -->
+<section class="sobre">
+  <div class="sobre-inner">
+    <div class="sobre-texto">
+      <h2>Quem é a<br/><span>GV Soluções</span></h2>
+      <p>Somos especializados em serviços terceirizados de zeladoria, limpeza e conservação para condomínios residenciais em Blumenau e região.</p>
+      <p>Atuamos com foco em organização, segurança e economia — garantindo que o condomínio esteja sempre limpo, bem cuidado e em conformidade com as normas trabalhistas vigentes.</p>
+      <p>Nosso diferencial está na gestão inteligente dos materiais de limpeza: fazemos uma avaliação criteriosa dos produtos utilizados, eliminamos desperdícios e padronizamos o consumo, gerando economia real desde os primeiros meses.</p>
+      <p class="destaque-frase">Nossa missão é simplificar a vida do síndico e valorizar o patrimônio dos condôminos.</p>
+    </div>
+    <div class="sobre-visual">
+      <div class="sobre-box">
+        <div class="titulo-box">Nosso Compromisso</div>
+        <div class="conteudo-box">Responsabilidade trabalhista <strong>100% nossa</strong>: CLT, encargos, EPIs, uniformes, férias e substituições. O síndico fica blindado de qualquer passivo.</div>
+      </div>
+      <div class="sobre-box">
+        <div class="titulo-box">Cobertura de Postos</div>
+        <div class="conteudo-box">Em caso de faltas, afastamentos ou férias, realizamos a cobertura com <strong>pessoal de reserva sem custo adicional</strong> ao condomínio.</div>
+      </div>
+      <div class="sobre-box">
+        <div class="titulo-box">LGPD e Confidencialidade</div>
+        <div class="conteudo-box">Todos os dados do condomínio e de moradores são tratados com <strong>absoluto sigilo</strong>, em conformidade com a Lei Geral de Proteção de Dados.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section class="servicos">
+  <span class="section-label">O que oferecemos</span>
+  <h2 class="section-titulo">Serviços Especializados<br/>para Condomínios</h2>
+  <p class="section-sub">Terceirização completa com foco total na rotina do seu condomínio.</p>
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon">🏢</div>
+      <h3>Zeladoria</h3>
+      <ul>
+        <li>Acompanhamento da rotina diária</li>
+        <li>Apoio ao síndico em demandas do dia a dia</li>
+        <li>Abertura e fechamento de áreas comuns</li>
+        <li>Recebimento de entregas e encomendas</li>
+        <li>44 horas semanais, segunda a sábado</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧹</div>
+      <h3>Limpeza e Conservação</h3>
+      <ul>
+        <li>Halls, escadas e corredores</li>
+        <li>Higienização de elevadores e corrimãos</li>
+        <li>Garagens e áreas externas</li>
+        <li>Rotinas de limpeza pesada programadas</li>
+        <li>Checklist diário de atividades</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon">📦</div>
+      <h3>Gestão de Materiais</h3>
+      <ul>
+        <li>Avaliação criteriosa dos produtos em uso</li>
+        <li>Padronização com melhor custo-benefício</li>
+        <li>Controle e redução de desperdícios</li>
+        <li>Relatório de consumo mensal</li>
+        <li>Resultado: +35% de economia comprovada</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔄</div>
+      <h3>Coberturas e Substituições</h3>
+      <ul>
+        <li>Cobertura de faltas em dias úteis</li>
+        <li>Equipe de reserva sempre disponível</li>
+        <li>Gestão de férias sem impacto na rotina</li>
+        <li>Sem custo adicional ao condomínio</li>
+        <li>Escala 100% gerenciada pela GV Soluções</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFÍCIOS -->
+<section class="beneficios">
+  <span class="section-label">Por que nos escolher</span>
+  <h2 class="section-titulo">Benefícios para Síndicos<br/>e Administradoras</h2>
+  <p class="section-sub">Menos burocracia, mais resultado e tranquilidade no dia a dia.</p>
+  <div class="beneficios-grid">
+    <div class="ben-card">
+      <div class="ben-icon">💰</div>
+      <h4>Economia Inteligente</h4>
+      <p>Avaliamos os produtos e rotinas do condomínio para reduzir custos sem abrir mão da qualidade. Resultado comprovado: mais de 35% de economia em materiais de limpeza.</p>
+    </div>
+    <div class="ben-card">
+      <div class="ben-icon">⚖️</div>
+      <h4>Segurança Jurídica</h4>
+      <p>Toda responsabilidade trabalhista é nossa: CLT, encargos, EPIs, uniformes, férias e substituições. O síndico fica completamente blindado de passivo trabalhista.</p>
+    </div>
+    <div class="ben-card">
+      <div class="ben-icon">👷</div>
+      <h4>Equipe Treinada</h4>
+      <p>Profissionais selecionados, uniformizados e identificados com crachá. Treinados para atuar em condomínios residenciais com eficiência, discrição e segurança.</p>
+    </div>
+    <div class="ben-card">
+      <div class="ben-icon">📋</div>
+      <h4>Organização Total</h4>
+      <p>Rotinas definidas, checklists por área e cronograma de limpeza. Menos reclamações de moradores e mais tranquilidade para o síndico no cotidiano.</p>
+    </div>
+    <div class="ben-card">
+      <div class="ben-icon">🔍</div>
+      <h4>Supervisão Presencial</h4>
+      <p>Visitas mensais de supervisão no condomínio para garantir o padrão dos serviços e ajustar qualquer detalhe com agilidade e atenção.</p>
+    </div>
+    <div class="ben-card">
+      <div class="ben-icon">📱</div>
+      <h4>Atendimento Direto</h4>
+      <p>Canal direto via WhatsApp para o síndico. Rapidez na substituição de colaboradores, feedbacks e solicitações sem burocracia e sem intermediários.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="como">
+  <span class="section-label">Simples e rápido</span>
+  <h2 class="section-titulo">Como funciona<br/>a contratação</h2>
+  <p class="section-sub">Da primeira conversa ao início dos serviços, sem complicação e sem surpresas.</p>
+  <div class="passos">
+    <div class="passo">
+      <div class="passo-num">1</div>
+      <h4>Contato pelo WhatsApp</h4>
+      <p>Você envia os dados do condomínio: metragem, torres e áreas comuns.</p>
+    </div>
+    <div class="passo">
+      <div class="passo-num">2</div>
+      <h4>Visita Técnica</h4>
+      <p>Avaliamos estrutura, rotina e consumo de materiais para uma proposta precisa.</p>
+    </div>
+    <div class="passo">
+      <div class="passo-num">3</div>
+      <h4>Proposta Personalizada</h4>
+      <p>Definimos equipe, horários, atividades e apresentamos o valor sem surpresas.</p>
+    </div>
+    <div class="passo">
+      <div class="passo-num">4</div>
+      <h4>Início e Acompanhamento</h4>
+      <p>Equipe uniformizada em atividade com supervisão recorrente e suporte direto.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTO -->
+<section class="depoimento">
+  <div class="depo-aspas">"</div>
+  <blockquote>
+    Após a chegada da GV Soluções, conseguimos melhorar visivelmente a limpeza do condomínio e ainda reduzir em mais de 35% o gasto com materiais. A rotina ficou mais organizada e hoje tenho muito menos reclamações dos moradores.
+  </blockquote>
+  <cite>— Síndico de condomínio residencial · Blumenau
+
