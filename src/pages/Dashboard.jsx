@@ -1,109 +1,193 @@
+import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react'
+import { transacaoFunctions, condominioFunctions } from '../lib/supabaseClient'
 
-export default function Dashboard() {
-  // Dados de exemplo (em produção viriam do Supabase)
-  const stats = {
-    receitas: 15000,
-    despesas: 8500,
-    saldo: 6500,
-    lembretes: 3
+export default function Dashboard({ currentUser }) {
+  const [stats, setStats] = useState({
+    receitas: 0,
+    despesas: 0,
+    saldo: 0
+  })
+  const [recentTransacoes, setRecentTransacoes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [currentUser])
+
+  const loadDashboardData = async () => {
+    if (!currentUser || !currentUser.id) return
+
+    try {
+      setLoading(true)
+      setError('')
+
+      // Carregar todas as transações do usuário
+      const transacoes = await transacaoFunctions.list(currentUser.id)
+
+      // Calcular totais
+      let receitas = 0
+      let despesas = 0
+
+      transacoes.forEach(t => {
+        if (t.tipo === 'receita') {
+          receitas += t.valor
+        } else {
+          despesas += t.valor
+        }
+      })
+
+      const saldo = receitas - despesas
+
+      setStats({
+        receitas,
+        despesas,
+        saldo
+      })
+
+      // Pegar últimas 5 transações
+      setRecentTransacoes(transacoes.slice(0, 5))
+    } catch (err) {
+      setError('Erro ao carregar dados: ' + err.message)
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const recentes = [
-    { id: 1, descricao: 'Contrato Condomínio A', valor: 5000, tipo: 'receita', data: '2024-09-08' },
-    { id: 2, descricao: 'Folha de Pagamento', valor: 8500, tipo: 'despesa', data: '2024-09-08' },
-    { id: 3, descricao: 'Material de Limpeza', valor: 450, tipo: 'despesa', data: '2024-09-07' },
-  ]
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
 
-  const lembretes = [
-    { id: 1, titulo: 'Renovação - Condomínio B', data: '2024-10-15', status: 'pendente' },
-    { id: 2, titulo: 'Renovação - Condomínio C', data: '2024-11-20', status: 'pendente' },
-    { id: 3, titulo: 'Renovação - Condomínio D', data: '2024-12-10', status: 'pendente' },
-  ]
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('pt-BR')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card p-6">
+      {/* Header */}
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h3>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Visão geral de suas finanças</p>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 flex items-center gap-2">
+          <AlertCircle size={20} />
+          {error}
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Receitas */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Receitas</p>
-              <p className="text-3xl font-bold text-green-600">R$ {stats.receitas.toLocaleString('pt-BR')}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Receitas</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                {formatCurrency(stats.receitas)}
+              </p>
             </div>
-            <TrendingUp className="text-green-600" size={32} />
+            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
+              <TrendingUp className="text-green-600 dark:text-green-400" size={24} />
+            </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        {/* Despesas */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border-l-4 border-red-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Despesas</p>
-              <p className="text-3xl font-bold text-red-600">R$ {stats.despesas.toLocaleString('pt-BR')}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Despesas</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                {formatCurrency(stats.despesas)}
+              </p>
             </div>
-            <TrendingDown className="text-red-600" size={32} />
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Saldo</p>
-              <p className="text-3xl font-bold text-sky-600">R$ {stats.saldo.toLocaleString('pt-BR')}</p>
-            </div>
-            <div className="w-8 h-8 bg-sky-100 dark:bg-sky-900 rounded-full flex items-center justify-center">
-              <span className="text-sky-600 font-bold">$</span>
+            <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg">
+              <TrendingDown className="text-red-600 dark:text-red-400" size={24} />
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
+        {/* Saldo */}
+        <div className={`bg-white dark:bg-slate-800 rounded-lg p-6 border-l-4 ${stats.saldo >= 0 ? 'border-blue-500' : 'border-orange-500'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Lembretes</p>
-              <p className="text-3xl font-bold text-amber-600">{stats.lembretes}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Saldo</p>
+              <p className={`text-2xl font-bold mt-2 ${stats.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {formatCurrency(stats.saldo)}
+              </p>
             </div>
-            <AlertCircle className="text-amber-600" size={32} />
+            <div className={`p-3 rounded-lg ${stats.saldo >= 0 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+              {stats.saldo >= 0 ? (
+                <CheckCircle className="text-blue-600 dark:text-blue-400" size={24} />
+              ) : (
+                <AlertCircle className="text-orange-600 dark:text-orange-400" size={24} />
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Transações Recentes */}
-        <div className="lg:col-span-2 card p-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white">Transações Recentes</h3>
-          <div className="space-y-3">
-            {recentes.map((transacao) => (
-              <div key={transacao.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white">{transacao.descricao}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{transacao.data}</p>
-                </div>
-                <p className={`font-bold ${transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
-                  {transacao.tipo === 'receita' ? '+' : '-'} R$ {transacao.valor.toLocaleString('pt-BR')}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Recent Transactions */}
+      <div className="bg-white dark:bg-slate-800 rounded-lg p-6">
+        <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Transações Recentes</h4>
 
-        {/* Lembretes de Renovação */}
-        <div className="card p-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white">Próximas Renovações</h3>
+        {recentTransacoes.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <AlertCircle size={32} className="mx-auto mb-2 opacity-50" />
+            <p>Nenhuma transação registrada</p>
+            <p className="text-xs mt-2">Comece adicionando condominios e transações</p>
+          </div>
+        ) : (
           <div className="space-y-3">
-            {lembretes.map((lembrete) => (
-              <div key={lembrete.id} className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="text-amber-600 flex-shrink-0 mt-1" size={16} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{lembrete.titulo}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{lembrete.data}</p>
-                  </div>
+            {recentTransacoes.map((transacao) => (
+              <div key={transacao.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {transacao.descricao}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatDate(transacao.data_lancamento)} • {transacao.categoria}
+                  </p>
+                </div>
+                <div className={`text-right ${transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className="font-bold">
+                    {transacao.tipo === 'receita' ? '+' : '-'} {formatCurrency(transacao.valor)}
+                  </p>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    transacao.tipo === 'receita'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                  }`}>
+                    {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Info Box */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          💡 <strong>Dica:</strong> Para análises detalhadas de cada condomínio, acesse a página de Condomínios e clique no nome do condomínio para ver o relatório completo.
+        </p>
       </div>
     </div>
   )

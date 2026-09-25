@@ -1,154 +1,408 @@
-import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { transacaoFunctions, condominioFunctions } from '../lib/supabaseClient'
 
-export default function Transacoes() {
-  const [transacoes, setTransacoes] = useState([
-    { id: 1, descricao: 'Contrato Condomínio A', valor: 5000, tipo: 'receita', categoria: 'Contrato', data: '2024-09-08' },
-    { id: 2, descricao: 'Folha de Pagamento', valor: 5400, tipo: 'despesa', categoria: 'Salário', data: '2024-09-08' },
-    { id: 3, descricao: 'Compra Material Limpeza', valor: 450, tipo: 'despesa', categoria: 'Material de Limpeza', data: '2024-09-07' },
-    { id: 4, descricao: 'Serviço Extra Condomínio B', valor: 1200, tipo: 'receita', categoria: 'Serviço Extra', data: '2024-09-06' },
-  ])
-
+export default function Transacoes({ currentUser }) {
+  const [transacoes, setTransacoes] = useState([])
+  const [condominios, setCondominios] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ descricao: '', valor: '', tipo: 'receita', categoria: '', data: '' })
+  const [editingId, setEditingId] = useState(null)
+  const [filterTipo, setFilterTipo] = useState('todas')
+  const [formData, setFormData] = useState({
+    descricao: '',
+    valor: '',
+    tipo: 'despesa',
+    categoria: 'Salário',
+    condominio_id: '',
+    data_lancamento: new Date().toISOString().split('T')[0]
+  })
+  const [isSaving, setIsSaving] = useState(false)
 
-  const categorias = {
-    receita: ['Contrato', 'Serviço Extra'],
-    despesa: ['Imposto', 'Material de Limpeza', 'Salário', 'Benefício']
+  // Categorias por tipo
+  const categoriasPorTipo = {
+    receita: ['Contrato', 'Extra', 'Multa', 'Outro'],
+    despesa: ['Salário', 'Encargo', 'Imposto', 'Benefício', 'Outro']
   }
 
-  const handleSave = () => {
-    if (formData.descricao && formData.valor && formData.categoria && formData.data) {
-      setTransacoes([...transacoes, { ...formData, id: Date.now(), valor: parseFloat(formData.valor) }])
-      setFormData({ descricao: '', valor: '', tipo: 'receita', categoria: '', data: '' })
-      setShowForm(false)
+  // Carregar dados ao montar componente
+  useEffect(() => {
+    loadData()
+  }, [currentUser])
+
+  const loadData = async () => {
+    if (!currentUser || !currentUser.id) return
+
+    try {
+      setLoading(true)
+      setError('')
+      const [transacoes, condominios] = await Promise.all([
+        transacaoFunctions.list(currentUser.id),
+        condominioFunctions.list(currentUser.id)
+      ])
+      setTransacoes(transacoes || [])
+      setCondominios(condominios || [])
+
+      // Definir primeiro condomínio como padrão se houver
+      if (condominios && condominios.length > 0 && !formData.condominio_id) {
+        setFormData(prev => ({ ...prev, condominio_id: condominios[0].id }))
+      }
+    } catch (err) {
+      setError('Erro ao carregar dados: ' + err.message)
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleDelete = (id) => {
-    setTransacoes(transacoes.filter(t => t.id !== id))
+  const handleSave = async () => {
+    if (!formData.descricao || !formData.valor || !formData.condominio_id) {
+      alert('Preencha todos os campos obrigatórios')
+      return
+    }
+
+    if (!currentUser || !currentUser.id) {
+      alert('Usuário não identificado')
+      return
+    }
+
+    try {
+      setIsSaving(true)
+      const dataToSave = {
+        descricao: formData.descricao,
+        valor: parseFloat(formData.valor),
+        tipo: formData.tipo,
+        categoria: formData.categoria,
+        condominio_id: formData.condominio_id,
+        data_lancamento: formData.data_lancamento
+      }
+
+      if (editingId) {
+        await transacaoFunctions.update(editingId, dataToSave)
+      } else {
+        await transacaoFunctions.create(currentUser.id, dataToSave)
+      }
+
+      await loadData()
+      resetForm()
+    } catch (err) {
+      alert('Erro ao salvar: ' + err.message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const totalReceitas = transacoes.filter(t => t.tipo === 'receita').reduce((sum, t) => sum + t.valor, 0)
-  const totalDespesas = transacoes.filter(t => t.tipo === 'despesa').reduce((sum, t) => sum + t.valor, 0)
-  const saldo = totalReceitas - totalDespesas
+  const resetForm = () => {
+    setFormData({
+      descricao: '',
+      valor: '',
+      tipo: 'despesa',
+      categoria: 'Salário',
+      condominio_id: condominios.length > 0 ? condominios[0].id : '',
+      data_lancamento: new Date().toISOString().split('T')[0]
+    })
+    setEditingId(null)
+    setShowForm(false)
+  }
+
+  const handleEdit = (transacao) => {
+    setFormData({
+      descricao: transacao.descricao,
+      valor: transacao.valor,
+      tipo: transacao.tipo,
+      categoria: transacao.categoria,
+      condominio_id: transacao.condominio_id,
+      data_lancamento: transacao.data_lancamento
+    })
+    setEditingId(transacao.id)
+    setShowForm(true)
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Tem certeza que deseja deletar esta transação?')) {
+      try {
+        await transacaoFunctions.delete(id)
+        await loadData()
+      } catch (err) {
+        alert('Erro ao deletar: ' + err.message)
+      }
+    }
+  }
+
+  const getCondominioNome = (id) => {
+    return condominios.find(c => c.id === id)?.nome || 'N/A'
+  }
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('pt-BR')
+  }
+
+  // Filtrar transações
+  const transacoesFiltradas = filterTipo === 'todas' ? transacoes : transacoes.filter(t => t.tipo === filterTipo)
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Transações</h2>
+      {/* Header with Button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Transações</h3>
         <button
-          onClick={() => setShowForm(!showForm)}
-          className="btn-primary flex items-center gap-2"
+          onClick={() => {
+            resetForm()
+            setShowForm(true)
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
         >
           <Plus size={20} />
           Nova Transação
         </button>
       </div>
 
-      {/* Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card p-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Receitas</p>
-          <p className="text-2xl font-bold text-green-600">R$ {totalReceitas.toLocaleString('pt-BR')}</p>
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+          {error}
         </div>
-        <div className="card p-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Despesas</p>
-          <p className="text-2xl font-bold text-red-600">R$ {totalDespesas.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="card p-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Saldo</p>
-          <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-sky-600' : 'text-red-600'}`}>R$ {saldo.toLocaleString('pt-BR')}</p>
-        </div>
-      </div>
+      )}
 
-      {/* Formulário */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="card p-6">
-          <h3 className="font-bold text-lg mb-4">Nova Transação</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input
-              type="text"
-              placeholder="Descrição"
-              className="input"
-              value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="Valor"
-              className="input"
-              value={formData.valor}
-              onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-            />
-            <select
-              className="input"
-              value={formData.tipo}
-              onChange={(e) => setFormData({ ...formData, tipo: e.target.value, categoria: '' })}
-            >
-              <option value="receita">Receita</option>
-              <option value="despesa">Despesa</option>
-            </select>
-            <select
-              className="input"
-              value={formData.categoria}
-              onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-            >
-              <option value="">Selecione a categoria</option>
-              {categorias[formData.tipo].map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            <input
-              type="date"
-              className="input"
-              value={formData.data}
-              onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleSave} className="btn-primary">Salvar</button>
-            <button onClick={() => setShowForm(false)} className="btn-secondary">Cancelar</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md max-h-screen overflow-y-auto">
+            <h4 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+              {editingId ? 'Editar Transação' : 'Nova Transação'}
+            </h4>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Condomínio
+                </label>
+                <select
+                  value={formData.condominio_id}
+                  onChange={(e) => setFormData({ ...formData, condominio_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="">Selecione um condomínio</option>
+                  {condominios.map(c => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tipo
+                </label>
+                <select
+                  value={formData.tipo}
+                  onChange={(e) => {
+                    const newTipo = e.target.value
+                    setFormData({
+                      ...formData,
+                      tipo: newTipo,
+                      categoria: categoriasPorTipo[newTipo][0]
+                    })
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="receita">Receita</option>
+                  <option value="despesa">Despesa</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Categoria
+                </label>
+                <select
+                  value={formData.categoria}
+                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                >
+                  {categoriasPorTipo[formData.tipo].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Descrição
+                </label>
+                <input
+                  type="text"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                  placeholder="Ex: Salário - João Silva"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Valor (R$)
+                </label>
+                <input
+                  type="number"
+                  value={formData.valor}
+                  onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                  placeholder="0.00"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Data
+                </label>
+                <input
+                  type="date"
+                  value={formData.data_lancamento}
+                  onChange={(e) => setFormData({ ...formData, data_lancamento: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowForm(false)}
+                disabled={isSaving}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:bg-blue-400 flex items-center justify-center gap-2"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Lista */}
-      <div className="card overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      {/* Filter */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setFilterTipo('todas')}
+          className={`px-4 py-2 rounded-lg transition ${
+            filterTipo === 'todas'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+          }`}
+        >
+          Todas
+        </button>
+        <button
+          onClick={() => setFilterTipo('receita')}
+          className={`px-4 py-2 rounded-lg transition ${
+            filterTipo === 'receita'
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+          }`}
+        >
+          Receitas
+        </button>
+        <button
+          onClick={() => setFilterTipo('despesa')}
+          className={`px-4 py-2 rounded-lg transition ${
+            filterTipo === 'despesa'
+              ? 'bg-red-600 text-white'
+              : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+          }`}
+        >
+          Despesas
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full bg-white dark:bg-slate-800 rounded-lg overflow-hidden">
+          <thead className="bg-gray-100 dark:bg-slate-700 border-b border-gray-200 dark:border-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">Descrição</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">Categoria</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">Tipo</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">Valor</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">Data</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-slate-900 dark:text-white">Ação</th>
+              <th className="text-left px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Data</th>
+              <th className="text-left px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Condomínio</th>
+              <th className="text-left px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Descrição</th>
+              <th className="text-left px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Categoria</th>
+              <th className="text-right px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Valor</th>
+              <th className="text-center px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Tipo</th>
+              <th className="text-center px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Ações</th>
             </tr>
           </thead>
-          <tbody>
-            {transacoes.map((transacao) => (
-              <tr key={transacao.id} className="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <td className="px-6 py-4 text-slate-900 dark:text-white font-medium">{transacao.descricao}</td>
-                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{transacao.categoria}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${transacao.tipo === 'receita' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {transacoesFiltradas.map((transacao) => (
+              <tr key={transacao.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+                <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{formatDate(transacao.data_lancamento)}</td>
+                <td className="px-6 py-4 text-gray-700 dark:text-gray-300 text-sm">{getCondominioNome(transacao.condominio_id)}</td>
+                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{transacao.descricao}</td>
+                <td className="px-6 py-4 text-gray-700 dark:text-gray-300 text-sm">{transacao.categoria}</td>
+                <td className={`px-6 py-4 text-right font-semibold ${
+                  transacao.tipo === 'receita' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {transacao.tipo === 'receita' ? '+' : '-'} {formatCurrency(transacao.valor)}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                    transacao.tipo === 'receita'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                  }`}>
                     {transacao.tipo === 'receita' ? 'Receita' : 'Despesa'}
                   </span>
                 </td>
-                <td className={`px-6 py-4 font-bold ${transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
-                  {transacao.tipo === 'receita' ? '+' : '-'} R$ {transacao.valor.toLocaleString('pt-BR')}
-                </td>
-                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{transacao.data}</td>
-                <td className="px-6 py-4 text-right">
-                  <button onClick={() => handleDelete(transacao.id)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
-                    <Trash2 size={16} className="text-red-600" />
-                  </button>
+                <td className="px-6 py-4">
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={() => handleEdit(transacao)}
+                      className="p-2 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 rounded-lg transition"
+                    >
+                      <Edit2 size={16} className="text-yellow-600 dark:text-yellow-400" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(transacao.id)}
+                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition"
+                    >
+                      <Trash2 size={16} className="text-red-600 dark:text-red-400" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        {transacoesFiltradas.length === 0 && (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <p>Nenhuma transação encontrada. Clique em "Nova Transação" para começar.</p>
+          </div>
+        )}
       </div>
     </div>
   )

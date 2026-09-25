@@ -7,6 +7,7 @@ import Funcionarios from './pages/Funcionarios'
 import Transacoes from './pages/Transacoes'
 import Lembretes from './pages/Lembretes'
 import RelatorioCondominio from './pages/RelatorioCondominio'
+import { authFunctions } from './lib/supabaseClient'
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -15,6 +16,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [selectedCondominioId, setSelectedCondominioId] = useState(null)
   const [selectedCondominioNome, setSelectedCondominioNome] = useState(null)
+  const [isInitializing, setIsInitializing] = useState(true)
 
   // Inicializar tema
   useEffect(() => {
@@ -25,26 +27,25 @@ export default function App() {
     }
   }, [])
 
-  // Verificar login ao carregar
+  // Verificar sessão ao carregar
   useEffect(() => {
-    const savedUser = localStorage.getItem('gv_current_user')
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser))
-    }
-
-    // Inicializar usuário de demo se não existir
-    const users = JSON.parse(localStorage.getItem('gv_users') || '[]')
-    if (users.length === 0) {
-      localStorage.setItem('gv_users', JSON.stringify([
-        {
-          id: 'demo-user',
-          email: 'test@gv.com',
-          password: '123456',
-          name: 'Usuário Demo'
-        }
-      ]))
-    }
+    checkSession()
   }, [])
+
+  const checkSession = async () => {
+    try {
+      // Primeiro verificar se há um usuário armazenado localmente
+      const savedUser = localStorage.getItem('gv_current_user')
+      if (savedUser) {
+        const user = JSON.parse(savedUser)
+        setCurrentUser(user)
+      }
+    } catch (err) {
+      console.error('Erro ao verificar sessão:', err)
+    } finally {
+      setIsInitializing(false)
+    }
+  }
 
   // Atualizar tema
   const updateTheme = (isDark) => {
@@ -59,10 +60,16 @@ export default function App() {
   }
 
   // Logout
-  const handleLogout = () => {
-    localStorage.removeItem('gv_current_user')
-    setCurrentUser(null)
-    setCurrentPage('dashboard')
+  const handleLogout = async () => {
+    try {
+      await authFunctions.signout()
+    } catch (err) {
+      console.error('Erro ao fazer logout:', err)
+    } finally {
+      localStorage.removeItem('gv_current_user')
+      setCurrentUser(null)
+      setCurrentPage('dashboard')
+    }
   }
 
   // Abrir relatório de condomínio
@@ -78,6 +85,15 @@ export default function App() {
     setSelectedCondominioId(null)
     setSelectedCondominioNome(null)
     setCurrentPage('condominios')
+  }
+
+  // Se está inicializando, mostrar loading
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    )
   }
 
   // Se não está logado, mostrar página de login
@@ -132,7 +148,7 @@ export default function App() {
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Usuário</p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                {currentUser.name}
+                {currentUser.name || currentUser.nome || 'Usuário'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 {currentUser.email}
@@ -177,15 +193,16 @@ export default function App() {
 
           {/* Page Content */}
           <div className="p-4 sm:p-6">
-            {currentPage === 'dashboard' && <Dashboard />}
+            {currentPage === 'dashboard' && <Dashboard currentUser={currentUser} />}
             {currentPage === 'condominios' && (
-              <Condominios onSelectCondominio={openRelatorio} />
+              <Condominios currentUser={currentUser} onSelectCondominio={openRelatorio} />
             )}
-            {currentPage === 'funcionarios' && <Funcionarios />}
-            {currentPage === 'transacoes' && <Transacoes />}
-            {currentPage === 'lembretes' && <Lembretes />}
+            {currentPage === 'funcionarios' && <Funcionarios currentUser={currentUser} />}
+            {currentPage === 'transacoes' && <Transacoes currentUser={currentUser} />}
+            {currentPage === 'lembretes' && <Lembretes currentUser={currentUser} />}
             {currentPage === 'relatorio' && (
               <RelatorioCondominio
+                currentUser={currentUser}
                 condominioId={selectedCondominioId}
                 condominioNome={selectedCondominioNome}
                 onBack={closeRelatorio}
